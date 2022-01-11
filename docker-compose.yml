@@ -1,0 +1,92 @@
+version: '3.9'
+
+services:
+  portainer:
+    image: portainer/portainer-ce:2.11.0
+    hostname: portainer
+    container_name: portainer__portainer
+
+    restart: always
+
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+
+      - type: volume
+        source: portainer_data
+        target: /data
+
+    expose:
+      - 9000
+
+    networks:
+      - portainer_internet
+      - portainer_cloudflared
+
+    deploy:
+      resources:
+        limits:
+          memory: 1024m
+
+    logging:
+      driver: json-file
+      options:
+        max-file: '1'
+        max-size: 1m
+
+
+  cloudflared:
+    image: cloudflare/cloudflared:2021.12.3
+    hostname: cloudflared
+    container_name: portainer__cloudflared
+
+    command:
+      tunnel --hostname portainer.yr32.net --url http://portainer:9000
+
+    depends_on:
+      - portainer
+
+    restart: always
+
+    volumes:
+      - type: bind
+        source: ./cert.pem
+        target: /etc/cloudflared/cert.pem
+        read_only: true
+
+      - type: bind
+        source: ./config.yml
+        target: /etc/cloudflared/config.yml
+        read_only: true
+
+    networks:
+      - cloudflared_internet
+      - portainer_cloudflared
+
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+
+    logging:
+      driver: json-file
+      options:
+        max-file: '1'
+        max-size: 1m
+
+volumes:
+  portainer_data:
+    name: portainer__portainer_data
+
+networks:
+  portainer_cloudflared:
+    name: portainer__portainer_internet
+
+  portainer_internet:
+    name: portainer__portainer_internet
+
+  cloudflared_internet:
+    name: portainer__cloudflared_internet
+
+
