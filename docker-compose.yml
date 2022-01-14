@@ -6,7 +6,7 @@ services:
     hostname: portainer
     container_name: portainer__portainer
 
-    restart: always
+    restart: unless-stopped
 
     volumes:
       - type: bind
@@ -21,13 +21,13 @@ services:
       - 9000
 
     networks:
-      - portainer_internet
-      - portainer_cloudflared
+      portainer_cloudflared:
+      portainer_internet:
 
     deploy:
       resources:
         limits:
-          memory: 1024m
+          memory: 256m
 
     logging:
       driver: json-file
@@ -42,12 +42,15 @@ services:
     container_name: portainer__cloudflared
 
     command:
-      tunnel --hostname portainer.yr32.net --url http://portainer:9000
+      "tunnel --hostname portainer.yr32.net --url http://portainer:9000 --metrics 0.0.0.0:9126"
+
+    # for 600 cert.pem
+    user: root
 
     depends_on:
       - portainer
 
-    restart: always
+    restart: unless-stopped
 
     volumes:
       - type: bind
@@ -61,8 +64,11 @@ services:
         read_only: true
 
     networks:
-      - cloudflared_internet
-      - portainer_cloudflared
+      portainer_cloudflared:
+      cloudflared_internet:
+      prometheus__cloudflared:
+        aliases:
+          - cloudflared__portainer
 
     deploy:
       resources:
@@ -80,13 +86,18 @@ volumes:
     name: portainer__portainer_data
 
 networks:
+  prometheus__cloudflared:
+    name: prometheus__cloudflared
+    internal: true
+    external: true
+
   portainer_cloudflared:
-    name: portainer__portainer_internet
+    name: portainer__portainer_cloudflared
+    internal: true
 
   portainer_internet:
     name: portainer__portainer_internet
 
   cloudflared_internet:
     name: portainer__cloudflared_internet
-
 
