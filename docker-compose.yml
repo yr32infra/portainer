@@ -8,7 +8,20 @@ services:
 
     restart: unless-stopped
 
+    environment:
+      - LD_LIBRARY_PATH=/lib64/
+
     volumes:
+      - type: bind
+        source: /lib/x86_64-linux-gnu/
+        target: /lib64/
+        read_only: true
+
+      - type: bind
+        source: /usr/local/bin/docker-compose
+        target: /docker-compose
+        read_only: true
+
       - type: bind
         source: /var/run/docker.sock
         target: /var/run/docker.sock
