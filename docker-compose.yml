@@ -50,7 +50,7 @@ services:
 
 
   cloudflared:
-    image: cloudflare/cloudflared:2022.7.0
+    image: cloudflare/cloudflared:2022.7.1
     hostname: cloudflared
     container_name: portainer__cloudflared
 
